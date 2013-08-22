@@ -5,48 +5,10 @@ using System.Text;
 
 namespace Evaluator
 {
-    public enum UnaryOperator
-    {
-        Default = 0,
-        Identity,
-        Inverse,
-        Factorial,
-        LogicalNot,
-        ConditionalNot
-    }
-
-    public enum BinaryOperator
-    {
-        Default = 0,
-        Addition,
-        Subtration,
-        Multiplication,
-        Division,
-        IntegralDivision,
-        Modulus,
-        Exponent,
-        LogicalAnd,
-        LogicalOr,
-        LogicalXor,
-        ConditionalAnd,
-        ConditionalOr,
-        Equality,
-        Inequality,
-        LessThan,
-        LessThanOrEqualTo,
-        GreaterThan,
-        GreaterThanOrEqualTo
-    }
-
-    public enum TernaryOperator
-    {
-        Default = 0,
-        Conditional
-    }
-
     public enum ExpressionElement
     {
         Invalid = 0,
+        Empty,
         Delimiter,
         BinaryNumber,
         OctalNumber,
@@ -55,6 +17,37 @@ namespace Evaluator
         UnaryPrefixOperator,
         UnaryPostfixOperator,
         BinaryOperator,
-        TernaryOperator,
+        TernaryOperator
+    }
+
+    public enum Operator
+    {
+        Invalid = 0,
+        NotAnOperator,
+        UnaryIdentity,
+        UnaryInverse,
+        UnaryFactorial,
+        UnaryConditionalNot,
+        UnaryLogicalNot,
+        BinaryExponentiation,
+        BinaryMultiplication,
+        BinaryDivision,
+        BinaryModulus,
+        BinaryAddition,
+        BinarySubtraction,
+        BinaryShiftLeft,
+        BinaryShiftRight,
+        BinaryLessThan,
+        BinaryGreaterThan,
+        BinaryLessThanOrEqualTo,
+        BinaryGreterThanOrEqualTo,
+        BinaryEquality,
+        BinaryInequality,
+        BinaryLogicalAnd,
+        BinaryLogicalXor,
+        BinaryLogicalOr,
+        BinaryConditionalAnd,
+        BinaryConditionalOr,
+        TernaryConditional
     }
 }

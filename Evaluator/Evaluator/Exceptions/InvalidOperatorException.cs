@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Evaluator.Exceptions
 {
+    [Obsolete]
     public sealed class InvalidOperatorException : Exception
     {
         public InvalidOperatorException()

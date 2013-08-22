@@ -33,6 +33,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -41,14 +42,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums.cs" />
+    <Compile Include="EvaluatorCore.cs" />
     <Compile Include="Exceptions\InvalidOperatorException.cs" />
-    <Compile Include="IntegralCore\BinaryExpression.cs" />
-    <Compile Include="IntegralCore\IntegralExpressionBase.cs" />
-    <Compile Include="IntegralCore\TernaryExpression.cs" />
-    <Compile Include="IntegralCore\UnaryExpression.cs" />
+    <Compile Include="InputVerifier.cs" />
+    <Compile Include="IntegralCore\IntegralExpression.cs" />
+    <Compile Include="IntegralCore\IntegralExpressionElement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="DecimalCore\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

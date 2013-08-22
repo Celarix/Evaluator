@@ -59,6 +59,7 @@
             this.ResultLabel.Size = new System.Drawing.Size(42, 13);
             this.ResultLabel.TabIndex = 2;
             this.ResultLabel.Text = "Result:";
+            this.ResultLabel.Click += new System.EventHandler(this.ResultLabel_Click);
             // 
             // Form1
             // 

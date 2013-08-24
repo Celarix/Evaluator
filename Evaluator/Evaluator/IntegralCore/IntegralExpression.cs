@@ -29,36 +29,46 @@ namespace Evaluator.IntegralCore
                 }
 
                 int elementLength = element.Length;
-                string firstChar = element[0].ToString();
-                string lastChar = element[elementLength - 1].ToString();
 
-                if (elementLength > 1)
+                // There are three cases of what a given element string might be.
+                // The first case is that it's a decimal number (e.g. 1048).
+                // The second case is that it's a binary or ternary operator (e.g. *, ^^, ?).
+                // The third case is that it's a decimal number with one or more unary operators (e.g. 5!, ~265, ~!3665!).
+
+                if (element.IsDecimalNumber())
                 {
-                    if (firstChar.IsUnaryOperator())
-                    {
-                        result.Add(new IntegralExpressionElement(firstChar, ExpressionElement.UnaryPrefixOperator, firstChar.GetUnaryOperator(true)));
+                    result.Add(new IntegralExpressionElement(element, ExpressionElement.DecimalNumber, Operator.NotAnOperator));
+                }
+                else if (element.IsDecimalNumberWithUnaryOperators())
+                {
+                    var split = element.SplitUnaryElement();
 
-                        string operand = element.Substring(1);
-                        var operandElement = new IntegralExpressionElement();
-                        operandElement.Parse(operand);
-                        result.Add(operandElement);
-                        continue;
+                    foreach (char c in split[0])
+                    {
+                        string cStr = c.ToString();
+                        result.Add(new IntegralExpressionElement(cStr, ExpressionElement.UnaryPrefixOperator, cStr.GetUnaryOperator(true)));
                     }
-                    else if (lastChar.IsUnaryOperator())
-                    {
-                        string operand = element.Substring(0, elementLength - 1);
-                        var operandElement = new IntegralExpressionElement();
-                        operandElement.Parse(operand);
-                        result.Add(operandElement);
 
-                        result.Add(new IntegralExpressionElement(lastChar, ExpressionElement.UnaryPostfixOperator, lastChar.GetUnaryOperator(false)));
-                        continue;
+                    result.Add(new IntegralExpressionElement(split[1], ExpressionElement.DecimalNumber, Operator.NotAnOperator));
+
+                    foreach (char c in split[2])
+                    {
+                        string cStr = c.ToString();
+                        result.Add(new IntegralExpressionElement(cStr, ExpressionElement.UnaryPostfixOperator, cStr.GetUnaryOperator(false)));
                     }
                 }
-
-                var resultElement = new IntegralExpressionElement();
-                resultElement.Parse(element);
-                result.Add(resultElement);
+                else if (element.IsBinaryOperator())
+                {
+                    result.Add(new IntegralExpressionElement(element, ExpressionElement.BinaryOperator, element.GetBinaryOperator()));
+                }
+                else if (element.IsTernaryOperator())
+                {
+                    result.Add(new IntegralExpressionElement(element, ExpressionElement.TernaryOperator, element.GetTernaryOperator()));
+                }
+                else
+                {
+                    result.Add(new IntegralExpressionElement("", ExpressionElement.Invalid, Operator.NotAnOperator));
+                }
             }
 
             this.elements = result;
@@ -101,14 +111,14 @@ namespace Evaluator.IntegralCore
                 if (current.Operator == Operator.UnaryIdentity)
                 {
                     int operandIndex;
-                    var operand = this.GetNextNonEmptyValue(i, out operandIndex);
+                    var operand = this.GetNextDecimalValue(i, out operandIndex);
                     if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
                     {
                         throw new Exception("Expected operand.");
                     }
 
-                    elements[i] = operand;
-                    elements[operandIndex] = IntegralExpressionElement.Empty;
+                    elements[operandIndex] = operand;
+                    elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
@@ -122,15 +132,15 @@ namespace Evaluator.IntegralCore
                 if (current.Operator == Operator.UnaryInverse)
                 {
                     int operandIndex;
-                    var operand = this.GetNextNonEmptyValue(i, out operandIndex);
+                    var operand = this.GetNextDecimalValue(i, out operandIndex);
 
                     if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
                     {
                         throw new Exception("Expected operand.");
                     }
 
-                    elements[i] = new IntegralExpressionElement((-long.Parse(operand.Value)).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    elements[operandIndex] = IntegralExpressionElement.Empty;
+                    elements[operandIndex] = new IntegralExpressionElement((-long.Parse(operand.Value)).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                    elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
@@ -144,7 +154,7 @@ namespace Evaluator.IntegralCore
                 if (current.Operator == Operator.UnaryFactorial)
                 {
                     int operandIndex;
-                    var operand = this.GetPreviousNonEmptyValue(i, out operandIndex);
+                    var operand = this.GetPreviousDecValue(i, out operandIndex);
 
                     if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
                     {
@@ -179,7 +189,7 @@ namespace Evaluator.IntegralCore
                 if (current.Operator == Operator.UnaryConditionalNot)
                 {
                     int operandIndex;
-                    var operand = this.GetNextNonEmptyValue(i, out operandIndex);
+                    var operand = this.GetNextDecimalValue(i, out operandIndex);
 
                     if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
                     {
@@ -188,14 +198,14 @@ namespace Evaluator.IntegralCore
 
                     if (operand.Value == "0")
                     {
-                        elements[i] = new IntegralExpressionElement("1", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                        elements[operandIndex] = new IntegralExpressionElement("1", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
                     }
                     else
                     {
-                        elements[i] = new IntegralExpressionElement("0", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                        elements[operandIndex] = new IntegralExpressionElement("0", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
                     }
 
-                    elements[operandIndex] = IntegralExpressionElement.Empty;
+                    elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
@@ -209,20 +219,20 @@ namespace Evaluator.IntegralCore
                 if (current.Operator == Operator.UnaryLogicalNot)
                 {
                     int operandIndex;
-                    var operand = this.GetNextNonEmptyValue(i, out operandIndex);
+                    var operand = this.GetNextDecimalValue(i, out operandIndex);
 
                     if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
                     {
                         throw new Exception("Expected operand.");
                     }
 
-                    elements[i] = new IntegralExpressionElement((~operand.GetValue()).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    elements[operandIndex] = IntegralExpressionElement.Empty;
+                    elements[operandIndex] = new IntegralExpressionElement((~operand.GetValue()).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                    elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
 
-        private IntegralExpressionElement GetNextNonEmptyValue(int startingIndex)
+        private IntegralExpressionElement GetNextDecimalValue(int startingIndex)
         {
             if (startingIndex + 1 >= elementCount)
             {
@@ -231,7 +241,7 @@ namespace Evaluator.IntegralCore
 
             for (int i = startingIndex + 1; i < elementCount; i++)
             {
-                if (elements[i].ElementType != ExpressionElement.Empty)
+                if (elements[i].ElementType == ExpressionElement.DecimalNumber)
                 {
                     return elements[i];
                 }
@@ -239,7 +249,7 @@ namespace Evaluator.IntegralCore
             return null;
         }
 
-        private IntegralExpressionElement GetPreviousNonEmptyValue(int startingIndex)
+        private IntegralExpressionElement GetPreviousDecimalValue(int startingIndex)
         {
             if (startingIndex <= 0)
             {
@@ -248,7 +258,7 @@ namespace Evaluator.IntegralCore
 
             for (int i = startingIndex - 1; i >= 0; i--)
             {
-                if (elements[i].ElementType != ExpressionElement.Empty)
+                if (elements[i].ElementType == ExpressionElement.DecimalNumber)
                 {
                     return elements[i];
                 }
@@ -256,7 +266,7 @@ namespace Evaluator.IntegralCore
             return null;
         }
 
-        private IntegralExpressionElement GetNextNonEmptyValue(int startingIndex, out int resultIndex)
+        private IntegralExpressionElement GetNextDecimalValue(int startingIndex, out int resultIndex)
         {
             if (startingIndex + 1 >= elementCount)
             {
@@ -266,7 +276,7 @@ namespace Evaluator.IntegralCore
 
             for (int i = startingIndex + 1; i < elementCount; i++)
             {
-                if (elements[i].ElementType != ExpressionElement.Empty)
+                if (elements[i].ElementType == ExpressionElement.DecimalNumber)
                 {
                     resultIndex = i;
                     return elements[i];
@@ -276,7 +286,7 @@ namespace Evaluator.IntegralCore
             return null;
         }
 
-        private IntegralExpressionElement GetPreviousNonEmptyValue(int startingIndex, out int resultIndex)
+        private IntegralExpressionElement GetPreviousDecValue(int startingIndex, out int resultIndex)
         {
             if (startingIndex <= 0)
             {
@@ -286,7 +296,7 @@ namespace Evaluator.IntegralCore
 
             for (int i = startingIndex - 1; i >= 0; i--)
             {
-                if (elements[i].ElementType != ExpressionElement.Empty)
+                if (elements[i].ElementType == ExpressionElement.DecimalNumber)
                 {
                     resultIndex = i;
                     return elements[i];

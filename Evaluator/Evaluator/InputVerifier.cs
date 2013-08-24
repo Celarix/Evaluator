@@ -52,7 +52,7 @@ namespace Evaluator
                 return false;
             }
 
-            foreach (char c in input)
+            foreach (char c in input.Substring(1))
             {
                 if (!char.IsDigit(c)) return false;
             }
@@ -84,6 +84,30 @@ namespace Evaluator
         public static bool IsTernaryOperator(this string input)
         {
             return Contains(ternaryOperatorStrings, input);
+        }
+
+        public static bool IsDecimalNumberWithUnaryOperators(this string input)
+        {
+            if (string.IsNullOrEmpty(input) || input.IsDecimalNumber()) return false;
+
+            bool containsOperator = false;
+            bool containsNumber = false;
+
+            foreach (char c in input)
+            {
+                if (Contains(new char[] { '+', '-', '~', '!' }, c))
+                {
+                    containsOperator = true;
+                }
+                else if (char.IsDigit(c))
+                {
+                    containsNumber = true;
+                }
+
+                if (containsNumber && containsOperator) return true;
+            }
+
+            return false;
         }
 
         public static bool ContainsParentheses(this string input)
@@ -195,6 +219,37 @@ namespace Evaluator
         private static bool Contains<T>(T[] array, T item)
         {
             return Array.IndexOf(array, item) != -1;
+        }
+
+        public static string[] SplitUnaryElement(this string input)
+        {
+            StringBuilder prefixOperators = new StringBuilder();
+            StringBuilder number = new StringBuilder();
+            StringBuilder postfixOperators = new StringBuilder();
+            char[] unaryOperatorChars = { '+', '-', '~', '!' };
+            bool encounteredNumber = false;
+
+            foreach (char c in input)
+            {
+                if (Contains(unaryOperatorChars, c))
+                {
+                    if (!encounteredNumber)
+                    {
+                        prefixOperators.Append(c);
+                    }
+                    else
+                    {
+                        postfixOperators.Append(c);
+                    }
+                }
+                else if (char.IsDigit(c))
+                {
+                    number.Append(c);
+                    encounteredNumber = true;
+                }
+            }
+
+            return new string[] { prefixOperators.ToString(), number.ToString(), postfixOperators.ToString() };
         }
     }
 }

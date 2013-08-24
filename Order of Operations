@@ -1,0 +1,27 @@
+Unary:
+Identity: +
+Inverse: -
+Factorial: n!
+Conditional NOT: !n
+Bitwise NOT: ~
+
+Binary:
+Exponentiation: ^^
+Multiplication: *
+Division: /
+Modulus: %
+Addition: +
+Subtraction: -
+Bitwise Shift Left: <<
+Bitwise Shift Right: >>
+Less Than: <
+Greater Than: >
+Less Than or Equal To: <=
+Greater Than or Equal To:>=
+Equality: ==
+Inequality: !=
+Bitwise AND: &
+Bitwise XOR: ^
+Bitwise OR: |
+Conditional AND: &&
+Conditional OR: ||

@@ -22,10 +22,5 @@ namespace Evaluator.Exceptions
             : base(message, innerException)
         {
         }
-
-        protected InvalidOperatorException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
     }
 }

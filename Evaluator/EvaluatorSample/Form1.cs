@@ -24,7 +24,7 @@ namespace EvaluatorSample
         {
             try
             {
-                string input = this.ExpressionBox.Text;
+                string input = this.ExpressionBox.Text.SeparateElements();
                 if (string.IsNullOrEmpty(input))
                 {
                     this.ResultLabel.Text = "";

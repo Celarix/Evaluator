@@ -47,14 +47,25 @@ namespace Evaluator
 
         public static bool IsDecimalNumber(this string input)
         {
-            if (!input.StartsWith("-") && !char.IsDigit(input.First()))
+            if ((!input.StartsWith("-") && !char.IsDigit(input.First())) || (input.StartsWith("-") && input.Length == 1))
             {
                 return false;
             }
 
+            bool foundDecimalPoint = false;
             foreach (char c in input.Substring(1))
             {
-                if (!char.IsDigit(c)) return false;
+                if (!char.IsDigit(c))
+                {
+                    if (c == '.' && !foundDecimalPoint)
+                    {
+                        foundDecimalPoint = true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
             }
             return true;
         }
@@ -84,6 +95,23 @@ namespace Evaluator
         public static bool IsTernaryOperator(this string input)
         {
             return Contains(ternaryOperatorStrings, input);
+        }
+
+        public static bool IsUnaryOperator(this char input)
+        {
+            return input == '+' || input == '-' || input == '~' || input == '!';
+        }
+
+        public static bool IsBinaryOperator(this char input)
+        {
+            return input == '+' || input == '-' || input == '*' || input == '\\'
+                || input == '%' || input == '&' || input == '|' || input == '^'
+                || input == '=' || input == '!' || input == '<' || input == '>';
+        }
+
+        public static bool IsTernaryOperator(this char input)
+        {
+            return input == '?' || input == ':';
         }
 
         public static bool IsDecimalNumberWithUnaryOperators(this string input)
@@ -209,6 +237,78 @@ namespace Evaluator
                 default:
                     return Operator.NotAnOperator;
             }
+        }
+
+        public static char GetPreviousNonSpaceCharacter(this string input, int startingIndex)
+        {
+            for (int i = startingIndex - 1; i >= 0; i--)
+            {
+                if (input[i] != ' ')
+                {
+                    return input[i];
+                }
+            }
+            return '\0';
+        }
+
+        public static char GetNextNonSpaceCharacter(this string input, int startingIndex)
+        {
+            for (int i = startingIndex + 1; i < input.Length; i++)
+            {
+                if (input[i] != ' ')
+                {
+                    return input[i];
+                }
+            }
+            return '\0';
+        }
+
+        public static char GetPreviousNonSpaceCharacter(this string input, int startingIndex, out int resultIndex)
+        {
+            for (int i = startingIndex - 1; i >= 0; i--)
+            {
+                if (input[i] != ' ')
+                {
+                    resultIndex = i;
+                    return input[i];
+                }
+            }
+            resultIndex = -1;
+            return '\0';
+        }
+
+        public static char GetNextNonSpaceCharacter(this string input, int startingIndex, out int resultIndex)
+        {
+            for (int i = startingIndex + 1; i < input.Length; i++)
+            {
+                if (input[i] != ' ')
+                {
+                    resultIndex = i;
+                    return input[i];
+                }
+            }
+            resultIndex = -1;
+            return '\0';
+        }
+
+        public static string GetPreviousNonSpaceCharacterString(this string input, int startingIndex)
+        {
+            return input.GetPreviousNonSpaceCharacter(startingIndex).ToString();
+        }
+
+        public static string GetNextNonSpaceCharacterString(this string input, int startingIndex)
+        {
+            return input.GetNextNonSpaceCharacter(startingIndex).ToString();
+        }
+
+        public static string GetPreviousNonSpaceCharacterString(this string input, int startingIndex, out int resultIndex)
+        {
+            return input.GetPreviousNonSpaceCharacter(startingIndex, out resultIndex).ToString();
+        }
+
+        public static string GetNextNonSpaceCharacterString(this string input, int startingIndex, out int resultIndex)
+        {
+            return input.GetNextNonSpaceCharacter(startingIndex, out resultIndex).ToString();
         }
 
         private static bool IsHexadecimalDigit(char input)

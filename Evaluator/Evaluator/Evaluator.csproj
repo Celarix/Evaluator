@@ -45,8 +45,11 @@
     <Compile Include="EvaluatorCore.cs" />
     <Compile Include="Exceptions\InvalidOperatorException.cs" />
     <Compile Include="InputVerifier.cs" />
+    <Compile Include="IntegralCore\Constants.cs" />
     <Compile Include="IntegralCore\IntegralExpression.cs" />
     <Compile Include="IntegralCore\IntegralExpressionElement.cs" />
+    <Compile Include="IntegralCore\MathHelpers.cs" />
+    <Compile Include="ParsingHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

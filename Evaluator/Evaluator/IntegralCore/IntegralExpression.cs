@@ -77,11 +77,34 @@ namespace Evaluator.IntegralCore
 
         public string Evaluate()
         {
-            this.EvaluateUnaryIdentity();
-            this.EvaluateUnaryInverse();
-            this.EvaluateUnaryFactorial();
-            this.EvaluateUnaryConditionalNot();
-            this.EvaluateUnaryLogicalNot();
+            this.EvaluateUnaryPrefixElements(Operator.UnaryIdentity, (value => value));
+            this.EvaluateUnaryPrefixElements(Operator.UnaryInverse, (value => -value));
+            this.EvaluateUnaryPostfixElements(Operator.UnaryFactorial, (value => MathHelpers.Factorial(value)));
+            this.EvaluateUnaryPrefixElements(Operator.UnaryConditionalNot, (value => (value == 0L) ? 1L : 0L));
+            this.EvaluateUnaryPrefixElements(Operator.UnaryLogicalNot, (value => ~value));
+
+            this.EvaluateBinaryElements(Operator.BinaryExponentiation, ((left, right) => (long)Math.Pow(left, right)));
+            this.EvaluateBinaryElements(Operator.BinaryMultiplication, ((left, right) => left * right));
+            this.EvaluateBinaryElements(Operator.BinaryDivision, ((left, right) => left / right));
+            this.EvaluateBinaryElements(Operator.BinaryModulus, ((left, right) => left % right));
+            this.EvaluateBinaryElements(Operator.BinaryAddition, ((left, right) => left + right));
+            this.EvaluateBinaryElements(Operator.BinarySubtraction, ((left, right) => left - right));
+            this.EvaluateBinaryElements(Operator.BinaryShiftLeft, ((left, right) => left << (int)right));
+            this.EvaluateBinaryElements(Operator.BinaryShiftRight, ((left, right) => left >> (int)right));
+            this.EvaluateBinaryElements(Operator.BinaryLessThan, ((left, right) => (left < right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryGreaterThan, ((left, right) => (left > right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryLessThanOrEqualTo, ((left, right) => (left <= right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryGreterThanOrEqualTo, ((left, right) => (left >= right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryEquality, ((left, right) => (left == right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryInequality, ((left, right) => (left != right) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryLogicalAnd, ((left, right) => left & right));
+            this.EvaluateBinaryElements(Operator.BinaryLogicalXor, ((left, right) => left ^ right));
+            this.EvaluateBinaryElements(Operator.BinaryLogicalOr, ((left, right) => left | right));
+            this.EvaluateBinaryElements(Operator.BinaryConditionalAnd, ((left, right) => (left.ConditionalIdentity() && right.ConditionalIdentity()) ? 1 : 0));
+            this.EvaluateBinaryElements(Operator.BinaryConditionalOr, ((left, right) => (left.ConditionalIdentity() || right.ConditionalIdentity()) ? 1 : 0));
+
+            this.EvaluateTernaryElements(Operator.TernaryConditional, ((a, b, c) => (a != 0) ? b : c));
+
             this.ClearEmptyValues();
 
             return elements[0].Value.ToString();
@@ -102,132 +125,119 @@ namespace Evaluator.IntegralCore
             elements = result;
         }
 
-        private void EvaluateUnaryIdentity()
+        private void EvaluateUnaryPrefixElements(Operator operatorType, Func<long, long> expression)
         {
             for (int i = 0; i < elementCount; i++)
             {
                 var current = elements[i];
 
-                if (current.Operator == Operator.UnaryIdentity)
-                {
-                    int operandIndex;
-                    var operand = this.GetNextDecimalValue(i, out operandIndex);
-                    if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
-                    {
-                        throw new Exception("Expected operand.");
-                    }
-
-                    elements[operandIndex] = operand;
-                    elements[i] = IntegralExpressionElement.Empty;
-                }
-            }
-        }
-
-        private void EvaluateUnaryInverse()
-        {
-            for (int i = 0; i < elementCount; i++)
-            {
-                var current = elements[i];
-
-                if (current.Operator == Operator.UnaryInverse)
+                if (current.Operator == operatorType)
                 {
                     int operandIndex;
                     var operand = this.GetNextDecimalValue(i, out operandIndex);
 
-                    if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
-                    {
-                        throw new Exception("Expected operand.");
-                    }
-
-                    elements[operandIndex] = new IntegralExpressionElement((-long.Parse(operand.Value)).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    elements[i] = IntegralExpressionElement.Empty;
-                }
-            }
-        }
-
-        private void EvaluateUnaryFactorial()
-        {
-            for (int i = 0; i < elementCount; i++)
-            {
-                var current = elements[i];
-
-                if (current.Operator == Operator.UnaryFactorial)
-                {
-                    int operandIndex;
-                    var operand = this.GetPreviousDecValue(i, out operandIndex);
-
-                    if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
+                    if (operand == null)
                     {
                         throw new Exception("Expected operand.");
                     }
 
                     long value = operand.GetValue();
-                    if (value >= 21 || value <= 0)
-                    {
-                        throw new Exception("Logarithm over/underflow.");
-                    }
-                    long result = 1L;
+                    value = expression(value);
 
-                    while (value > 0)
-                    {
-                        result *= value;
-                        value--;
-                    }
-
-                    elements[operandIndex] = new IntegralExpressionElement(result.ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                    elements[operandIndex] = new IntegralExpressionElement(value.ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
                     elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
 
-        private void EvaluateUnaryConditionalNot()
+        private void EvaluateUnaryPostfixElements(Operator operatorType, Func<long, long> expression)
         {
             for (int i = 0; i < elementCount; i++)
             {
                 var current = elements[i];
 
-                if (current.Operator == Operator.UnaryConditionalNot)
+                if (current.Operator == operatorType)
                 {
                     int operandIndex;
-                    var operand = this.GetNextDecimalValue(i, out operandIndex);
+                    var operand = this.GetPreviousDecimalValue(i, out operandIndex);
 
-                    if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
+                    if (operand == null)
                     {
                         throw new Exception("Expected operand.");
                     }
 
-                    if (operand.Value == "0")
-                    {
-                        elements[operandIndex] = new IntegralExpressionElement("1", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    }
-                    else
-                    {
-                        elements[operandIndex] = new IntegralExpressionElement("0", ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    }
+                    long value = operand.GetValue();
+                    value = expression(value);
 
+                    elements[operandIndex] = new IntegralExpressionElement(value.ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
                     elements[i] = IntegralExpressionElement.Empty;
                 }
             }
         }
 
-        private void EvaluateUnaryLogicalNot()
+        private void EvaluateBinaryElements(Operator operatorType, Func<long, long, long> expression)
         {
             for (int i = 0; i < elementCount; i++)
             {
                 var current = elements[i];
 
-                if (current.Operator == Operator.UnaryLogicalNot)
+                if (current.Operator == operatorType)
                 {
-                    int operandIndex;
-                    var operand = this.GetNextDecimalValue(i, out operandIndex);
+                    int leftOperandIndex, rightOperandIndex;
+                    var leftOperand = this.GetPreviousDecimalValue(i, out leftOperandIndex);
+                    var rightOperand = this.GetNextDecimalValue(i, out rightOperandIndex);
 
-                    if (operand == null || operand.ElementType != ExpressionElement.DecimalNumber)
+                    if (leftOperand == null || rightOperand == null)
                     {
                         throw new Exception("Expected operand.");
                     }
 
-                    elements[operandIndex] = new IntegralExpressionElement((~operand.GetValue()).ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
-                    elements[i] = IntegralExpressionElement.Empty;
+                    long left = leftOperand.GetValue();
+                    long right = rightOperand.GetValue();
+                    long result = expression(left, right);
+
+                    elements[i] = new IntegralExpressionElement(result.ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                    elements[leftOperandIndex] = elements[rightOperandIndex] = IntegralExpressionElement.Empty;
+                }
+            }
+        }
+
+        private void EvaluateTernaryElements(Operator operatorType, Func<long, long, long, long> expression)
+        {
+            for (int i = 0; i < elementCount; i++)
+            {
+                var current = elements[i];
+
+                if (current.Operator == operatorType)
+                {
+                    int operand1Index, operand2Index, operand3Index;
+                    var operand1 = GetPreviousDecimalValue(i, out operand1Index);
+                    var operand2 = GetNextDecimalValue(i, out operand2Index);
+                    var operand3 = GetNextDecimalValue(operand2Index, out operand3Index);
+                    int secondOperatorIndex = -1;
+
+                    for (int j = operand2Index; j < operand3Index; j++)
+                    {
+                        if (elements[j].ElementType == ExpressionElement.TernaryOperator)
+                        {
+                            secondOperatorIndex = j;
+                            break;
+                        }
+                        else if (j == operand3Index - 1)
+                        {
+                            throw new Exception("Expected matching operator.");
+                        }
+                    }
+
+                    elements[secondOperatorIndex] = IntegralExpressionElement.Empty;
+
+                    long value1 = operand1.GetValue();
+                    long value2 = operand2.GetValue();
+                    long value3 = operand3.GetValue();
+                    long result = expression(value1, value2, value3);
+
+                    elements[i] = new IntegralExpressionElement(result.ToString(), ExpressionElement.DecimalNumber, Operator.NotAnOperator);
+                    elements[operand1Index] = elements[operand2Index] = elements[operand3Index] = IntegralExpressionElement.Empty;
                 }
             }
         }
@@ -286,7 +296,7 @@ namespace Evaluator.IntegralCore
             return null;
         }
 
-        private IntegralExpressionElement GetPreviousDecValue(int startingIndex, out int resultIndex)
+        private IntegralExpressionElement GetPreviousDecimalValue(int startingIndex, out int resultIndex)
         {
             if (startingIndex <= 0)
             {

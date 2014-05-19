@@ -17,7 +17,7 @@ namespace Evaluator
             {
                 char current = input[i];
 
-                if (i == input.Length - 1)
+                if (i == input.Length - 1) // last character
                 {
                     result.Append(current);
                     continue;
